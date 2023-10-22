@@ -14,7 +14,7 @@ with io.open("requirements.txt", encoding="utf-8") as f:
 setup(
     name="systembridgecli",
     description="System Bridge CLI",
-    keywords="system bridge cli",
+    keywords="system-bridge",
     author="Aidan Timson (Timmo)",
     author_email="aidan@timmo.dev",
     license="MIT",
