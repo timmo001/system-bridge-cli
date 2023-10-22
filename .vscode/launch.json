@@ -8,7 +8,7 @@
       "module": "systembridgecli",
       "preLaunchTask": "pip install",
       "justMyCode": false,
-      "args": []
+      "args": ["version"]
     }
   ]
 }
