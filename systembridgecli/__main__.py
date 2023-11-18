@@ -4,7 +4,6 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from typing import Optional
 from uuid import uuid4
 
 import typer
@@ -78,7 +77,7 @@ def settings_all():
 def setting(
     key: str,
     set_value: bool = False,
-    value: Optional[str] = None,
+    value: str | None = None,
 ) -> None:
     """Get or Set Setting"""
     if set_value:
@@ -93,7 +92,7 @@ def setting(
 def secret(
     key: str,
     set_value: bool = False,
-    value: Optional[str] = None,
+    value: str | None = None,
 ) -> None:
     """Get or Set Secret"""
     if set_value:
