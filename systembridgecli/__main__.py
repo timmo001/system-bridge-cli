@@ -77,11 +77,15 @@ def settings_all():
 def setting(
     key: str,
     set_value: bool = False,
-    value: str | None = None,
+    value: str = "",
 ) -> None:
     """Get or Set Setting"""
     if set_value:
-        settings.set(key, value)
+        if value:
+            settings.set(key, value)
+        else:
+            typer.secho("Missing value to set", err=True, fg=typer.colors.RED)
+            return
     if result := settings.get(key):
         typer.secho(result, fg=typer.colors.CYAN)
     else:
@@ -92,7 +96,7 @@ def setting(
 def secret(
     key: str,
     set_value: bool = False,
-    value: str | None = None,
+    value: str = "",
 ) -> None:
     """Get or Set Secret"""
     if set_value:
