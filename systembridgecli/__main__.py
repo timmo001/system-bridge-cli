@@ -21,7 +21,7 @@ database = Database()
 settings = Settings(database)
 
 
-@app.command(name="api-key", short_help="Get token")
+@app.command(name="token", short_help="Get token")
 def token(reset: bool = False) -> None:
     """Get Token"""
     if reset:
