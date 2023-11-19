@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import typer
 from systembridgeshared.common import get_user_data_directory
-from systembridgeshared.const import SECRET_API_KEY, SETTING_PORT_API
+from systembridgeshared.const import SECRET_TOKEN, SETTING_PORT_API
 from systembridgeshared.database import TABLE_MAP, Database
 from systembridgeshared.models.database_data import Settings as SettingsDatabaseModule
 from systembridgeshared.settings import Settings
@@ -21,13 +21,13 @@ database = Database()
 settings = Settings(database)
 
 
-@app.command(name="api-key", short_help="Get api key")
-def api_key(reset: bool = False) -> None:
-    """Get API Key"""
+@app.command(name="api-key", short_help="Get token")
+def token(reset: bool = False) -> None:
+    """Get Token"""
     if reset:
-        secret(SECRET_API_KEY, True, str(uuid4()))
+        secret(SECRET_TOKEN, True, str(uuid4()))
     else:
-        secret(SECRET_API_KEY)
+        secret(SECRET_TOKEN)
 
 
 @app.command(name="api-port", short_help="Get api port")
