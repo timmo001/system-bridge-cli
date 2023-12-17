@@ -8,19 +8,16 @@ from uuid import uuid4
 
 import typer
 from systembridgeshared.common import get_user_data_directory
-from systembridgeshared.const import SECRET_TOKEN, SETTING_PORT_API
-from systembridgeshared.database import TABLE_MAP, Database
-from systembridgeshared.models.database_data import Settings as SettingsDatabaseModule
+from systembridgeshared.const import SECRET_TOKEN
 from systembridgeshared.settings import Settings
 from tabulate import tabulate
 
 from ._version import __version__
 
 app = typer.Typer()
-database = Database()
-settings = Settings(database)
+settings = Settings()
 
-
+# TODO: Restore CLI functionality
 @app.command(name="token", short_help="Get token")
 def token(reset: bool = False) -> None:
     """Get Token"""
