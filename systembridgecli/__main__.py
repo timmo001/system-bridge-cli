@@ -6,11 +6,12 @@ import subprocess
 import sys
 from uuid import uuid4
 
+from tabulate import tabulate
 import typer
+
 from systembridgeshared.common import get_user_data_directory
 from systembridgeshared.const import SECRET_TOKEN
 from systembridgeshared.settings import Settings
-from tabulate import tabulate
 
 from ._version import __version__
 
@@ -20,7 +21,7 @@ settings = Settings()
 # TODO: Restore CLI functionality
 @app.command(name="token", short_help="Get token")
 def token(reset: bool = False) -> None:
-    """Get Token"""
+    """Get Token."""
     if reset:
         secret(SECRET_TOKEN, True, str(uuid4()))
     else:
@@ -29,13 +30,13 @@ def token(reset: bool = False) -> None:
 
 @app.command(name="api-port", short_help="Get api port")
 def api_port() -> None:
-    """Get API Port"""
+    """Get API Port."""
     setting(SETTING_PORT_API)
 
 
 @app.command(name="data", short_help="Get data")
 def data(module: str, key=None) -> None:
-    """Get data"""
+    """Get data."""
     table_module = TABLE_MAP.get(module)
     if key:
         result = database.get_data_by_key(table_module, key)
@@ -53,7 +54,7 @@ def data_value(
     module: str,
     key: str,
 ) -> None:
-    """Get data value"""
+    """Get data value."""
     table_module = TABLE_MAP.get(module)
     output = database.get_data_item_by_key(table_module, key)
     typer.secho(output.value if output else None, fg=typer.colors.GREEN)
@@ -61,7 +62,7 @@ def data_value(
 
 @app.command(name="settings", short_help="Get all settings")
 def settings_all():
-    """Get all Settings"""
+    """Get all Settings."""
     table_data = tabulate(
         [item.dict() for item in database.get_data(SettingsDatabaseModule)],
         headers="keys",
@@ -76,7 +77,7 @@ def setting(
     set_value: bool = False,
     value: str = "",
 ) -> None:
-    """Get or Set Setting"""
+    """Get or Set Setting."""
     if set_value:
         if value:
             settings.set(key, value)
@@ -95,7 +96,7 @@ def secret(
     set_value: bool = False,
     value: str = "",
 ) -> None:
-    """Get or Set Secret"""
+    """Get or Set Secret."""
     if set_value:
         if value:
             settings.set_secret(key, value)
@@ -110,7 +111,7 @@ def secret(
 
 @app.command(name="path-logs-backend", short_help="Backend logs path")
 def path_logs_backend() -> None:
-    """Open backend logs path"""
+    """Open backend logs path."""
     typer.secho(
         os.path.join(get_user_data_directory(), "system-bridge.log"),
         fg=typer.colors.YELLOW,
@@ -119,7 +120,7 @@ def path_logs_backend() -> None:
 
 @app.command(name="path-logs-gui", short_help="GUI logs path")
 def path_logs_gui() -> None:
-    """Open gui logs path"""
+    """Open gui logs path."""
     typer.secho(
         os.path.join(get_user_data_directory(), "system-bridge-gui.log"),
         fg=typer.colors.YELLOW,
@@ -128,7 +129,7 @@ def path_logs_gui() -> None:
 
 @app.command(name="open-logs-backend", short_help="Open backend logs")
 def open_logs_backend() -> None:
-    """Open backend logs"""
+    """Open backend logs."""
     path = os.path.join(get_user_data_directory(), "system-bridge.log")
     if sys.platform == "win32":
         os.startfile(path)
@@ -139,7 +140,7 @@ def open_logs_backend() -> None:
 
 @app.command(name="open-logs-gui", short_help="Open GUI logs")
 def open_logs_gui() -> None:
-    """Open gui logs"""
+    """Open gui logs."""
     path = os.path.join(get_user_data_directory(), "system-bridge-gui.log")
     if sys.platform == "win32":
         os.startfile(path)
@@ -150,7 +151,7 @@ def open_logs_gui() -> None:
 
 @app.command(name="version", short_help="CLI Version")
 def version() -> None:
-    """CLI Version"""
+    """CLI Version."""
     typer.secho(__version__.public(), fg=typer.colors.CYAN)
 
 
