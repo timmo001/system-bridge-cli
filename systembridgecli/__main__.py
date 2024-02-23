@@ -8,7 +8,6 @@ import subprocess
 import sys
 from uuid import uuid4
 
-from tabulate import tabulate
 import typer
 
 from systembridgeshared.common import get_user_data_directory
