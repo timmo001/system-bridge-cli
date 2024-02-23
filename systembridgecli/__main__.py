@@ -1,6 +1,7 @@
-"""System Bridge CLI: Main"""
+"""System Bridge CLI."""
 from __future__ import annotations
 
+from dataclasses import asdict
 import os
 import subprocess
 import sys
@@ -18,102 +19,91 @@ from ._version import __version__
 app = typer.Typer()
 settings = Settings()
 
-# TODO: Restore CLI functionality
+
 @app.command(name="token", short_help="Get token")
 def token(reset: bool = False) -> None:
     """Get Token."""
     if reset:
-        secret(SECRET_TOKEN, True, str(uuid4()))
+        settings.data.api.token = str(uuid4())
+        settings.update(asdict(settings.data))
+        typer.secho(settings.data.api.token, fg=typer.colors.CYAN)
     else:
-        secret(SECRET_TOKEN)
+        typer.secho(settings.data.api.token, fg=typer.colors.CYAN)
 
 
 @app.command(name="api-port", short_help="Get api port")
 def api_port() -> None:
     """Get API Port."""
-    setting(SETTING_PORT_API)
+    typer.secho(settings.data.api.port, fg=typer.colors.CYAN)
 
 
-@app.command(name="data", short_help="Get data")
-def data(module: str, key=None) -> None:
-    """Get data."""
-    table_module = TABLE_MAP.get(module)
-    if key:
-        result = database.get_data_by_key(table_module, key)
-    else:
-        result = database.get_data(table_module)
+# TODO: Add data commands
+# @app.command(name="data", short_help="Get data")
+# def data(module: str, key=None) -> None:
+#     """Get data."""
+#     table_module = TABLE_MAP.get(module)
+#     if key:
+#         result = database.get_data_by_key(table_module, key)
+#     else:
+#         result = database.get_data(table_module)
 
-    output = [item.dict() for item in result]
+#     output = [item.dict() for item in result]
 
-    table_data = tabulate(output, headers="keys", tablefmt="psql")
-    typer.secho(table_data, fg=typer.colors.GREEN)
+#     table_data = tabulate(output, headers="keys", tablefmt="psql")
+#     typer.secho(table_data, fg=typer.colors.GREEN)
 
 
-@app.command(name="data-value", short_help="Get data value")
-def data_value(
-    module: str,
-    key: str,
-) -> None:
-    """Get data value."""
-    table_module = TABLE_MAP.get(module)
-    output = database.get_data_item_by_key(table_module, key)
-    typer.secho(output.value if output else None, fg=typer.colors.GREEN)
+# @app.command(name="data-value", short_help="Get data value")
+# def data_value(
+#     module: str,
+#     key: str,
+# ) -> None:
+#     """Get data value."""
+#     table_module = TABLE_MAP.get(module)
+#     output = database.get_data_item_by_key(table_module, key)
+#     typer.secho(output.value if output else None, fg=typer.colors.GREEN)
 
 
 @app.command(name="settings", short_help="Get all settings")
 def settings_all():
     """Get all Settings."""
     table_data = tabulate(
-        [item.dict() for item in database.get_data(SettingsDatabaseModule)],
+        asdict(settings.data),
         headers="keys",
-        tablefmt="psql",
     )
     typer.secho(table_data, fg=typer.colors.CYAN)
 
 
-@app.command(name="setting", short_help="Get or set setting")
-def setting(
-    key: str,
-    set_value: bool = False,
-    value: str = "",
-) -> None:
-    """Get or Set Setting."""
-    if set_value:
-        if value:
-            settings.set(key, value)
+@app.command(name="setting", short_help="Get setting")
+def setting(key: str) -> None:
+    """Get setting."""
+    if result := getattr(settings.data, key):
+        if key == "api":
+            table_data = tabulate(
+                asdict(result),
+                headers="keys",
+            )
+            typer.secho(table_data, fg=typer.colors.CYAN)
         else:
-            typer.secho("Missing value to set", err=True, fg=typer.colors.RED)
-            return
-    if result := settings.get(key):
-        typer.secho(result, fg=typer.colors.CYAN)
+            typer.secho(result, fg=typer.colors.CYAN)
     else:
         typer.secho(f"Could not find {key}", err=True, fg=typer.colors.RED)
 
 
-@app.command(name="secret", short_help="Get or set secret")
-def secret(
-    key: str,
-    set_value: bool = False,
-    value: str = "",
-) -> None:
-    """Get or Set Secret."""
-    if set_value:
-        if value:
-            settings.set_secret(key, value)
-        else:
-            typer.secho("Missing value to set", err=True, fg=typer.colors.RED)
-            return
-    if result := settings.get_secret(key):
-        typer.secho(result, fg=typer.colors.MAGENTA)
-    else:
-        typer.secho(f"Could not find {key}", err=True, fg=typer.colors.RED)
+@app.command(name="path-logs", short_help="Logs path")
+def path_logs() -> None:
+    """Open logs path."""
+    typer.secho(
+        os.path.join(get_user_data_directory(), "system-bridge.log"),
+        fg=typer.colors.YELLOW,
+    )
 
 
 @app.command(name="path-logs-backend", short_help="Backend logs path")
 def path_logs_backend() -> None:
     """Open backend logs path."""
     typer.secho(
-        os.path.join(get_user_data_directory(), "system-bridge.log"),
+        os.path.join(get_user_data_directory(), "system-bridge-backend.log"),
         fg=typer.colors.YELLOW,
     )
 
@@ -127,10 +117,21 @@ def path_logs_gui() -> None:
     )
 
 
+@app.command(name="open-logs", short_help="Open logs")
+def open_logs() -> None:
+    """Open logs."""
+    path = os.path.join(get_user_data_directory(), "system-bridge.log")
+    if sys.platform == "win32":
+        os.startfile(path)
+    else:
+        opener = "open" if sys.platform == "darwin" else "xdg-open"
+        subprocess.call([opener, path])
+
+
 @app.command(name="open-logs-backend", short_help="Open backend logs")
 def open_logs_backend() -> None:
     """Open backend logs."""
-    path = os.path.join(get_user_data_directory(), "system-bridge.log")
+    path = os.path.join(get_user_data_directory(), "system-bridge-backend.log")
     if sys.platform == "win32":
         os.startfile(path)
     else:
