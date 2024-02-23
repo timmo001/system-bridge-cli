@@ -11,7 +11,6 @@ from tabulate import tabulate
 import typer
 
 from systembridgeshared.common import get_user_data_directory
-from systembridgeshared.const import SECRET_TOKEN
 from systembridgeshared.settings import Settings
 
 from ._version import __version__
