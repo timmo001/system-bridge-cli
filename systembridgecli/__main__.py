@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+import json
 import os
 import subprocess
 import sys
@@ -48,7 +49,7 @@ def api_port() -> None:
 
 #     output = [item.dict() for item in result]
 
-#     table_data = tabulate(output, headers="keys", tablefmt="psql")
+#     table_data = tabulate(output, headers="keys", tablefmt="psql",)
 #     typer.secho(table_data, fg=typer.colors.GREEN)
 
 
@@ -66,25 +67,24 @@ def api_port() -> None:
 @app.command(name="settings", short_help="Get all settings")
 def settings_all():
     """Get all Settings."""
-    table_data = tabulate(
-        asdict(settings.data),
-        headers="keys",
-    )
-    typer.secho(table_data, fg=typer.colors.CYAN)
+    typer.secho(json.dumps(asdict(settings.data)), fg=typer.colors.CYAN)
 
 
 @app.command(name="setting", short_help="Get setting")
 def setting(key: str) -> None:
     """Get setting."""
-    if result := getattr(settings.data, key):
-        if key == "api":
-            table_data = tabulate(
-                asdict(result),
-                headers="keys",
-            )
-            typer.secho(table_data, fg=typer.colors.CYAN)
-        else:
-            typer.secho(result, fg=typer.colors.CYAN)
+    if key == "api":
+        typer.secho(json.dumps(asdict(settings.data.api)), fg=typer.colors.CYAN)
+        return
+
+    if key.startswith("api."):
+        key = key.split(".")[1]
+        result = getattr(settings.data.api, key)
+    else:
+        result = getattr(settings.data, key)
+
+    if result:
+        typer.secho(result, fg=typer.colors.CYAN)
     else:
         typer.secho(f"Could not find {key}", err=True, fg=typer.colors.RED)
 
