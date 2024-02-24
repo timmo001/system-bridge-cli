@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
-from dataclasses import asdict
+from dataclasses import asdict, is_dataclass
 import json
 import os
 import subprocess
@@ -144,12 +144,14 @@ def api_port() -> None:
 def data(module: str) -> None:
     """Get data."""
     websocket_data = WebsocketData()
-    module_data = loop.run_until_complete(
+    modules_data = loop.run_until_complete(
         websocket_data.get_data_from_websocket([module])
     )
     loop.close()
 
-    typer.secho(json.dumps(asdict(getattr(module_data, module))), fg=typer.colors.GREEN)
+    module_data = getattr(modules_data, module)
+
+    typer.secho(json.dumps(asdict(module_data)), fg=typer.colors.GREEN)
 
 
 @app.command(name="data-value", short_help="Get data value")
@@ -159,12 +161,29 @@ def data_value(
 ) -> None:
     """Get data value."""
     websocket_data = WebsocketData()
-    module_data = loop.run_until_complete(
+    modules_data = loop.run_until_complete(
         websocket_data.get_data_from_websocket([module])
     )
     loop.close()
 
-    if result := getattr(getattr(module_data, module), key):
+    module_data = getattr(modules_data, module)
+
+    if "." in key:
+        module_keys = key.split(".")
+
+        result = module_data
+        for module_key in module_keys:
+            if result := getattr(result, module_key):
+                response = result
+            else:
+                typer.secho(f"Could not find {key}", err=True, fg=typer.colors.RED)
+                return
+
+        typer.secho(
+            json.dumps(asdict(response)) if is_dataclass(response) else response,
+            fg=typer.colors.GREEN,
+        )
+    elif result := getattr(module_data, key):
         typer.secho(result, fg=typer.colors.GREEN)
     else:
         typer.secho(f"Could not find {key}", err=True, fg=typer.colors.RED)
