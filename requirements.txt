@@ -1,4 +1,5 @@
 incremental==22.10.0
 shellingham==1.5.4
+systembridgeconnector>=4.0.1
 systembridgeshared>=4.0.0
 typer==0.9.0
