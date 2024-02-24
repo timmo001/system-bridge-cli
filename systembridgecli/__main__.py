@@ -26,100 +26,101 @@ from systembridgeshared.settings import Settings
 from ._version import __version__
 
 setup_logger("ERROR", "system-bridge-cli")
-# logger = logging.getLogger()
 
 app = typer.Typer()
 settings = Settings()
 
 loop = asyncio.new_event_loop()
-modules_data = ModulesData()
-websocket_client = WebSocketClient(
-    "localhost",
-    settings.data.api.port,
-    settings.data.api.token,
-)
-websocket_listen_task: asyncio.Task | None = None
 
 
-async def _handle_module(
-    module_name: str,
-    module: Any,
-) -> None:
-    """Handle data from the WebSocket client."""
-    global modules_data  # noqa: PLW0603
-    setattr(modules_data, module_name, module)
+class WebsocketData:
+    """Websocket data."""
 
-
-async def _listen_for_data() -> None:
-    """Listen for events from the WebSocket."""
-    global websocket_listen_task  # noqa: PLW0603
-
-    try:
-        await websocket_client.listen(callback=_handle_module)
-    except asyncio.CancelledError:
-        pass
-    except (
-        ConnectionErrorException,
-        ConnectionClosedException,
-        ConnectionResetError,
-    ) as exception:
-        typer.secho(f"Connection closed to WebSocket: {exception}", fg=typer.colors.RED)
-
-    if websocket_listen_task:
-        websocket_listen_task.cancel()
-        websocket_listen_task = None
-
-
-def _setup_listener() -> None:
-    """Set up the listener for the WebSocket."""
-    global websocket_listen_task  # noqa: PLW0603
-
-    if websocket_listen_task:
-        websocket_listen_task.cancel()
-        websocket_listen_task = None
-
-    if loop is None:
-        typer.secho("No event loop!", fg=typer.colors.RED)
-        return
-
-    # Listen for data
-    websocket_listen_task = loop.create_task(
-        _listen_for_data(),
-        name="System Bridge WebSocket Listener",
-    )
-
-
-async def _get_data_from_websocket(modules: list[str]) -> ModulesData:
-    """Get data from websocket."""
-    global modules_data  # noqa: PLW0603
-    global websocket_listen_task  # noqa: PLW0603
-
-    # Connect to the WebSocket
-    await websocket_client.connect()
-
-    # Run the listener in a separate thread
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        loop.run_in_executor(executor, _setup_listener)
-
-    # Get data
-    await websocket_client.get_data(
-        GetData(
-            modules=modules,
+    def __init__(self) -> None:
+        """Initialize."""
+        self._modules_data = ModulesData()
+        self._websocket_client = WebSocketClient(
+            "localhost",
+            settings.data.api.port,
+            settings.data.api.token,
         )
-    )
+        self._websocket_listen_task: asyncio.Task | None = None
 
-    # Wait for the data to be received
-    while not all(getattr(modules_data, module) for module in modules):
-        await asyncio.sleep(1)
+    async def _handle_module(
+        self,
+        module_name: str,
+        module: Any,
+    ) -> None:
+        """Handle data from the WebSocket client."""
+        setattr(self._modules_data, module_name, module)
 
-    if websocket_listen_task:
-        websocket_listen_task.cancel()
-        websocket_listen_task = None
+    async def _listen_for_data(self) -> None:
+        """Listen for events from the WebSocket."""
 
-    # Close the WebSocket
-    await websocket_client.close()
+        try:
+            await self._websocket_client.listen(callback=self._handle_module)
+        except asyncio.CancelledError:
+            pass
+        except (
+            ConnectionErrorException,
+            ConnectionClosedException,
+            ConnectionResetError,
+        ) as exception:
+            typer.secho(
+                f"Connection closed to WebSocket: {exception}", fg=typer.colors.RED
+            )
 
-    return modules_data
+        if self._websocket_listen_task:
+            self._websocket_listen_task.cancel()
+            self._websocket_listen_task = None
+
+    def _setup_listener(self) -> None:
+        """Set up the listener for the WebSocket."""
+        if self._websocket_listen_task:
+            self._websocket_listen_task.cancel()
+            self._websocket_listen_task = None
+
+        if loop is None:
+            typer.secho("No event loop!", fg=typer.colors.RED)
+            return
+
+        # Listen for data
+        self._websocket_listen_task = loop.create_task(
+            self._listen_for_data(),
+            name="System Bridge WebSocket Listener",
+        )
+
+    async def get_data_from_websocket(
+        self,
+        modules: list[str],
+    ) -> ModulesData:
+        """Get data from websocket."""
+        # Connect to the WebSocket
+        await self._websocket_client.connect()
+
+        # Run the listener in a separate thread
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            loop.run_in_executor(executor, self._setup_listener)
+
+        # Get data
+        await self._websocket_client.get_data(
+            GetData(
+                modules=modules,
+            )
+        )
+
+        # Wait for the data to be received
+        while not all(getattr(self._modules_data, module) for module in modules):
+            await asyncio.sleep(1)
+
+        if self._websocket_listen_task:
+            self._websocket_listen_task.cancel()
+            self._websocket_listen_task = None
+
+        # Close the WebSocket
+        await self._websocket_client.close()
+
+        return self._modules_data
 
 
 @app.command(name="token", short_help="Get token")
@@ -142,7 +143,10 @@ def api_port() -> None:
 @app.command(name="data", short_help="Get data")
 def data(module: str) -> None:
     """Get data."""
-    module_data = loop.run_until_complete(_get_data_from_websocket([module]))
+    websocket_data = WebsocketData()
+    module_data = loop.run_until_complete(
+        websocket_data.get_data_from_websocket([module])
+    )
     loop.close()
 
     typer.secho(json.dumps(asdict(getattr(module_data, module))), fg=typer.colors.GREEN)
@@ -154,7 +158,10 @@ def data_value(
     key: str,
 ) -> None:
     """Get data value."""
-    module_data = loop.run_until_complete(_get_data_from_websocket([module]))
+    websocket_data = WebsocketData()
+    module_data = loop.run_until_complete(
+        websocket_data.get_data_from_websocket([module])
+    )
     loop.close()
 
     if result := getattr(getattr(module_data, module), key):
