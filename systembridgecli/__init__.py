@@ -1,1 +1,1 @@
-"""System Bridge CLI"""
+"""System Bridge CLI."""
