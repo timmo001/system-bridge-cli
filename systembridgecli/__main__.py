@@ -25,7 +25,6 @@ from systembridgeshared.exceptions import (
 from systembridgeshared.logger import setup_logger
 from systembridgeshared.settings import Settings
 
-
 setup_logger("ERROR", "system-bridge-cli")
 
 app = typer.Typer()
