@@ -11,8 +11,10 @@ import sys
 from typing import Any
 from uuid import uuid4
 
+import aiohttp
 import typer
 
+from systembridgecli._version import __version__
 from systembridgeconnector.websocket_client import WebSocketClient
 from systembridgemodels.modules import GetData, ModulesData
 from systembridgeshared.common import get_user_data_directory
@@ -23,7 +25,6 @@ from systembridgeshared.exceptions import (
 from systembridgeshared.logger import setup_logger
 from systembridgeshared.settings import Settings
 
-from ._version import __version__
 
 setup_logger("ERROR", "system-bridge-cli")
 
@@ -43,6 +44,7 @@ class WebsocketData:
             "localhost",
             settings.data.api.port,
             settings.data.api.token,
+            aiohttp.ClientSession(),
         )
         self._websocket_listen_task: asyncio.Task | None = None
 
