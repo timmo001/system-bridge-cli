@@ -1,4 +1,5 @@
 """System Bridge CLI."""
+
 from __future__ import annotations
 
 import asyncio
@@ -15,13 +16,13 @@ import aiohttp
 import typer
 
 from systembridgecli._version import __version__
-from systembridgeconnector.websocket_client import WebSocketClient
-from systembridgemodels.modules import GetData, ModulesData
-from systembridgeshared.common import get_user_data_directory
-from systembridgeshared.exceptions import (
+from systembridgeconnector.exceptions import (
     ConnectionClosedException,
     ConnectionErrorException,
 )
+from systembridgeconnector.websocket_client import WebSocketClient
+from systembridgemodels.modules import GetData, ModulesData
+from systembridgeshared.common import get_user_data_directory
 from systembridgeshared.logger import setup_logger
 from systembridgeshared.settings import Settings
 
