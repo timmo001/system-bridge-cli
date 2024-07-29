@@ -1,4 +1,4 @@
-incremental==22.10.0
+incremental==24.7.2
 shellingham==1.5.4
 systembridgeconnector>=4.0.5
 systembridgeshared>=4.0.4
